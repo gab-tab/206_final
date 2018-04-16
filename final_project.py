@@ -1,5 +1,29 @@
-#final project
-#Gaby Tabachnik
+# #final project
+# #Gaby Tabachnik
+#
+# User input: Enter a city to find the name of all the pizza restrauants within the city.
+#
+# 1 Hello Pizza
+# 2 Pizza Restraunts
+#
+#
+# Enter a number and Rating, Tweets, or Maps to find the Yelp Rating for the restaurant, the 10 most recent tweets for the restaurant, or to create 4 maps. Or, enter a new City. To exit, enter exit.
+#
+# EX: 1 Rating
+#
+# Rating: 4.0
+#
+#
+# Enter a number and Rating, Tweets, or Maps to find the Yelp Rating for the restaurant, the 10 most recent tweets for the restaurant, or to create 4 maps. Or, enter a new City. To exit, enter exit.
+#
+# 1 Tweets
+#
+#
+#
+# NEW DB: Store Restaurant Name and Rating
+# Twitter: Store Restaurant Name and top 10 recent tweets
+
+
 import secrets
 import sqlite3
 import csv
@@ -7,10 +31,13 @@ import json
 import requests
 from bs4 import BeautifulSoup
 import json
+import plotly.plotly as py
+import plotly.graph_objs as go
 from requests_oauthlib import OAuth1
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-#auth = OAuth1(secrets.twitter_api_key, secrets.twitter_api_secret, secrets.twitter_access_token, secrets.twitter_access_token_secret)
+
+auth = OAuth1(secrets.twitter_api_key, secrets.twitter_api_secret, secrets.twitter_access_token, secrets.twitter_access_token_secret)
 
 CACHE_FNAME = 'final_project_cache.json'
 try:
@@ -68,6 +95,16 @@ conn.commit()
 statement_drop_city = "DROP TABLE IF EXISTS 'City'"
 cur.execute(statement_drop_city)
 conn.commit()
+
+statement_drop_yelp = "DROP TABLE IF EXISTS 'Yelp'"
+cur.execute(statement_drop_yelp)
+conn.commit()
+
+statement_drop_twitter = "DROP TABLE IF EXISTS 'Twitter'"
+cur.execute(statement_drop_yelp)
+conn.commit()
+
+
 
 create_pizza = '''
 CREATE TABLE IF NOT EXISTS 'Pizza' (
@@ -148,6 +185,24 @@ for info in data:
     cur.execute(statement, insert_to_table)
 conn.commit()
 
+# class Tweet:
+#     def __init__(self, tweet_dict_from_json):
+#         if 'retweeted_status' in tweet_dict_from_json:
+#             self.is_retweet = True
+#         else:
+#             self.is_retweet = False
+#         self.text = tweet_dict_from_json['text']
+#         self.username = tweet_dict_from_json['user']['screen_name']
+#         self.creation_date = tweet_dict_from_json['created_at']
+#         self.num_retweets = tweet_dict_from_json['retweet_count']
+#         self.num_favorites = tweet_dict_from_json['favorite_count']
+#         self.popularity_score = self.num_retweets * 2 + self.num_favorites * 3
+#         self.id = tweet_dict_from_json['id']
+#
+#
+#     def __str__(self):
+#         return "@{}:{}\n[retweeted {} times]\n[favorited {} times]\n[tweeted on {}] | id: {}]".format(self.username, self.text, self.num_retweets, self.num_favorites, self.creation_date, self.id)
+
 def get_data_from_yelp(term, location, limit=50):
     url = 'https://api.yelp.com/v3/businesses/search'
     API_KEY = secrets.YELP_API_KEY
@@ -168,3 +223,17 @@ def get_data_from_yelp(term, location, limit=50):
 load_cache()
 
 get_data_from_yelp('Pizza', 'Chicago')
+
+
+
+# def get_tweets_for_restaurant:
+#     tweet_list = []
+#     search_var = RESTRAUNT NAME
+#     baseurl = 'https://api.twitter.com/1.1/search/tweets.json'
+#     req = make_request_using_cache(baseurl, params = {'q': search_var, "count" : 60}, auth=auth)
+#     data = json.loads(req)
+#     for tweet_data in data["statuses"]:
+#         inst = Tweet(tweet_data)
+#         tweet_list.append(inst)
+#     original_tweets = [t for t in tweet_list if t.is_retweet == False]
+#     return sorted(original_tweets, key = lambda tweet: tweet.popularity_score, reverse = True)[0:10]
