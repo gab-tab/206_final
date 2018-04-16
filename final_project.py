@@ -5,6 +5,8 @@
 #
 # 1 Hello Pizza
 # 2 Pizza Restraunts
+
+
 #
 #
 # Enter a number and Rating, Tweets, or Maps to find the Yelp Rating for the restaurant, the 10 most recent tweets for the restaurant, or to create 4 maps. Or, enter a new City. To exit, enter exit.
@@ -37,7 +39,69 @@ from requests_oauthlib import OAuth1
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-auth = OAuth1(secrets.twitter_api_key, secrets.twitter_api_secret, secrets.twitter_access_token, secrets.twitter_access_token_secret)
+def yes_no(value):
+    if value in ['y','n']:
+        return True
+    return False
+
+def isvalidcity(value):
+    #look up in database
+    return True
+
+def is_restaurant(value):
+    return True
+
+def ischoice(value):
+    if value in ['Rating','Tweets','Maps']:
+        return True
+    return False
+
+
+def userinput(prompt, default_val='n', validation = yes_no):
+    while True:
+        response = input(prompt)
+        if response:
+            pass
+        else:
+            response = default_val
+        if response == 'New':
+            break
+        if response == 'Exit':
+            break
+        if validation(response):
+            break
+        print (response, ' is not a valid response')
+    return response
+print ('Enter a City, pick a restaurant, and request either a Yelp rating, the ten most recent tweets, or 4 maps.')
+print('Enter "New" for a new City. To exit, enter exit.')
+while True:
+    user_city = userinput('Enter a city to find the names of all the pizza restrauants within the city. ','Cleveland', isvalidcity)
+    if user_city == 'New':
+        continue
+    if user_city == "Exit":
+        break
+    print (user_city)
+
+    user_number = userinput('Enter the number of the restaurant you want. ', 1, is_restaurant)
+    if user_number == 'New':
+        continue
+    if user_number == "Exit":
+        break
+    print (user_number)
+
+    user_choice = userinput('Enter Rating, Tweets, or Maps','Rating', ischoice)
+    if user_choice == 'New':
+        continue
+    if user_choice == "Exit":
+        break
+    print (user_choice)
+
+
+
+
+
+
+#auth = OAuth1(secrets.twitter_api_key, secrets.twitter_api_secret, secrets.twitter_access_token, secrets.twitter_access_token_secret)
 
 CACHE_FNAME = 'final_project_cache.json'
 try:
@@ -223,6 +287,10 @@ def get_data_from_yelp(term, location, limit=50):
 load_cache()
 
 get_data_from_yelp('Pizza', 'Chicago')
+
+
+
+
 
 
 
