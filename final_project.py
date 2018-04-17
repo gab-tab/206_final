@@ -25,7 +25,6 @@
 # NEW DB: Store Restaurant Name and Rating
 # Twitter: Store Restaurant Name and top 10 recent tweets
 
-
 import secrets
 import sqlite3
 import csv
@@ -33,6 +32,7 @@ import json
 import requests
 from bs4 import BeautifulSoup
 import json
+import pprint
 import plotly.plotly as py
 import plotly.graph_objs as go
 from requests_oauthlib import OAuth1
@@ -40,67 +40,11 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 auth = OAuth1(secrets.twitter_api_key, secrets.twitter_api_secret, secrets.twitter_access_token, secrets.twitter_access_token_secret)
 
-def yes_no(value):
-    if value in ['y','n']:
-        return True
-    return False
-
-def isvalidcity(value):
-    #look up in database
-    return True
-
-def is_restaurant(value):
-    return True
-
-def ischoice(value):
-    if value in ['Rating','Tweets','Maps']:
-        return True
-    return False
 
 
-def userinput(prompt, default_val='n', validation = yes_no):
-    while True:
-        response = input(prompt)
-        if response:
-            pass
-        else:
-            response = default_val
-        if response == 'New':
-            break
-        if response == 'Exit':
-            break
-        if validation(response):
-            break
-        print (response, ' is not a valid response')
-    return response
-print ('Enter a City, pick a restaurant, and request either a Yelp rating, the ten most recent tweets, or 4 maps.')
-print('Enter "New" for a new City. To exit, enter exit.')
-while True:
-    user_city = userinput('Enter a city to find the names of all the pizza restrauants within the city. ','Cleveland', isvalidcity)
-    if user_city == 'New':
-        continue
-    if user_city == "Exit":
-        break
-    print (user_city)
-
-    user_number = userinput('Enter the number of the restaurant you want. ', 1, is_restaurant)
-    if user_number == 'New':
-        continue
-    if user_number == "Exit":
-        break
-    print (user_number)
-
-    user_choice = userinput('Enter Rating, Tweets, or Maps','Rating', ischoice)
-    if user_choice == 'New':
-        continue
-    if user_choice == "Exit":
-        break
-    print (user_choice)
-
-
-
-
-
+'''
+routines to get data from yelp
+'''
 
 CACHE_FNAME = 'final_project_cache.json'
 try:
@@ -145,6 +89,171 @@ def make_request_using_cache(url, headers, params, verify=False):
         CACHE_DICTION[unique_ident] = resp.text
         save_cache()
         return CACHE_DICTION[unique_ident]
+
+def get_data_from_yelp(term, location, limit=50):
+    url = 'https://api.yelp.com/v3/businesses/search'
+    API_KEY = secrets.YELP_API_KEY
+    headers = {
+    'Authorization': 'Bearer {}'.format(API_KEY)
+        }
+    params = {'term': term, 'location': location, 'limit':50}
+    uniq = params_unique_combination(url, params)
+    if uniq in CACHE_DICTION:
+        text = CACHE_DICTION[uniq]
+        return text
+    else:
+        response = requests.get(url, headers=headers, params=params, verify=False)
+        yelpinfo = json.loads(response.text)
+        CACHE_DICTION[uniq] = yelpinfo
+        save_cache()
+        return yelpinfo
+#load_cache()
+
+#print(get_data_from_yelp('Pizza', 'Chicago'))
+
+
+DBNAME = 'pizza_info.db'
+PIZZACSV = 'pizza.csv'
+
+conn = sqlite3.connect(DBNAME)
+cur = conn.cursor()
+
+
+
+print('1')
+sql = "SELECT name FROM sqlite_master WHERE type = 'table';"
+cur.execute(sql)
+print(sql, '\n', cur.fetchall())
+
+print('2')
+sql = "SELECT SQL FROM sqlite_master WHERE type = 'table' AND name = 'City';"
+cur.execute(sql)
+print(sql, '\n', cur.fetchall())
+
+print('2.1')
+sql = "SELECT * FROM City;"
+cur.execute(sql)
+# print(sql, '\n', cur.fetchall())
+
+print('2.2')
+sql = "SELECT ID FROM City WHERE name = ?;"
+cur.execute(sql, ['New York'])
+# print(sql, '\n', cur.fetchall())
+
+print('3')
+sql = "SELECT SQL FROM sqlite_master WHERE type = 'table' AND name = 'Pizza';"
+cur.execute(sql)
+print(sql, '\n', cur.fetchall())
+
+print('3.2')
+sql = "SELECT * FROM Pizza WHERE city = ?;"
+cur.execute(sql, [5])
+# print(sql, '\n', cur.fetchall())
+
+
+
+
+
+
+
+def yes_no(value):
+    if value in ['y','n']:
+        return True
+    return False
+
+def isvalidcity(value):
+    sql = "SELECT ID FROM City WHERE name = ?;"
+    cur.execute(sql, [value])
+    result = cur.fetchall()
+    if result:
+        return True
+    return False
+
+def is_restaurant(value):
+    value = int(value)
+    global size_of_ls
+    if value < 1:
+        return False
+    if value > size_of_list:
+        return False
+    return True
+
+def ischoice(value):
+    if value in ['Rating','Tweets','Maps']:
+        return True
+    return False
+
+
+def userinput(prompt, default_val='n', validation = yes_no):
+    while True:
+        response = input(prompt)
+        if response:
+            pass
+        else:
+            response = default_val
+        if response == 'New':
+            break
+        if response == 'Exit':
+            break
+        if validation(response):
+            break
+        print (response, ' is not a valid response')
+    return response
+print ('Enter a City, pick a restaurant, and request either a Yelp rating, the ten most recent tweets, or 4 maps.')
+print('Enter "New" for a new City. To exit, enter exit.')
+while True:
+    user_city = userinput('Enter a city to find the names of all the pizza restaurants within the city. ','Provo', isvalidcity)
+    if user_city == 'New':
+        continue
+    if user_city == "Exit":
+        break
+    print (user_city)
+    sql = "SELECT ID FROM City WHERE name = ?;"
+    cur.execute(sql, [user_city])
+    city_id = cur.fetchall()
+    city_id = city_id[0]
+    city_id = city_id[0]
+
+    #now display the restrauants
+    sql = "SELECT DISTINCT name FROM Pizza WHERE city = ?;"
+    cur.execute(sql, [city_id])
+    # print(sql, '\n', cur.fetchall())
+    lst = cur.fetchall()
+    size_of_list = len(lst)
+    count = 0
+    for line in lst:
+        count = count + 1
+        line = line[0]
+        print (count, line)
+
+
+    user_number = int(userinput('Enter the number of the restaurant you want. ', 1, is_restaurant))
+    if user_number == 'New':
+        continue
+    if user_number == "Exit":
+        break
+    print (user_number)
+    restaurant = lst[user_number - 1]
+    restaurant = restaurant[0]
+
+
+    user_choice = userinput('Enter Rating, Tweets, or Maps','Rating', ischoice)
+    if user_choice == 'New':
+        continue
+    if user_choice == "Exit":
+        break
+    print (user_choice)
+    if user_choice == 'Rating':
+        z_json = get_data_from_yelp(restaurant, user_city)
+        load_cache()
+        pp = pprint.PrettyPrinter(indent = 2)
+        z_json = z_json['businesses']['rating']
+        pp.pprint(z_json)
+    if user_choice == 'Tweets':
+        pass
+    if user_choice == 'Maps':
+        pass
+
 
 DBNAME = 'pizza_info.db'
 PIZZACSV = 'pizza.csv'
@@ -248,26 +357,9 @@ for info in data:
     cur.execute(statement, insert_to_table)
 conn.commit()
 
-def get_data_from_yelp(term, location, limit=50):
-    url = 'https://api.yelp.com/v3/businesses/search'
-    API_KEY = secrets.YELP_API_KEY
-    headers = {
-    'Authorization': 'Bearer {}'.format(API_KEY)
-        }
-    params = {'term': term, 'location': location, 'limit':50}
-    uniq = params_unique_combination(url, params)
-    if uniq in CACHE_DICTION:
-        text = CACHE_DICTION[uniq]
-        return text
-    else:
-        response = requests.get(url, headers=headers, params=params, verify=False)
-        yelpinfo = json.loads(response.text)
-        CACHE_DICTION[uniq] = yelpinfo
-        save_cache()
-        return yelpinfo
-load_cache()
 
-get_data_from_yelp('Pizza', 'Chicago')
+
+
 
 class Tweet:
     def __init__(self, tweet_dict_from_json):
