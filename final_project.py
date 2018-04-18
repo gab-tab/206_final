@@ -1,6 +1,6 @@
 # #final project
 # #Gaby Tabachnik
-
+import sys
 import secrets
 import sqlite3
 import csv
@@ -378,79 +378,74 @@ def userinput(prompt, default_val='n', validation = yes_no):
         print (response, 'is not a valid response')
     return response
 
-
-user_ans = input('Do you want to see the price distributions of all the pizza restraunts in America? Y/N ')
-if user_ans == "Y":
-    show_rating_chart()
-
-print ('Enter a City, pick a restaurant, and request either a Yelp rating, the ten most recent tweets, or 4 maps.')
-while True:
-    user_city = userinput('Enter a city to recieve a list of pizza restaurants within the city. To exit, enter Exit. ','Provo', isvalidcity)
-    if user_city == 'New':
-        continue
-    if user_city == "Exit":
-        break
-    print (user_city)
-    sql = "SELECT ID FROM City WHERE name = ?;"
-    cur.execute(sql, [user_city])
-    city_id = cur.fetchall()
-    city_id = city_id[0]
-    city_id = city_id[0]
-
-    #now display the restrauants
-    sql = "SELECT DISTINCT name FROM Pizza WHERE city = ?;"
-    cur.execute(sql, [city_id])
-    # print(sql, '\n', cur.fetchall())
-    lst = cur.fetchall()
-    size_of_list = len(lst)
-    count = 0
-    for line in lst:
-        count = count + 1
-        line = line[0]
-        print (count, line)
-
-    user_ans = input('Do you want to see the map? Y/N')
+if __name__ == "__main__":
+    user_ans = input('Do you want to see the price distributions of all the pizza restraunts in America? Y/N ')
     if user_ans == "Y":
-        show_map(city_id)
+        show_rating_chart()
 
-    user_number = userinput('Enter the number of the restaurant you want. Enter New for a new City. To exit, enter Exit. ', 1, is_restaurant)
-    if user_number == 'New':
-        continue
-    if user_number == "Exit":
-        break
-
-    print (user_number)
-    restaurant = lst[int(user_number) - 1]
-    restaurant = restaurant[0]
-
-
+    print ('Enter a City, pick a restaurant, and request either a Yelp rating, the ten most recent tweets, or 4 maps.')
     while True:
-        user_choice = userinput('Enter Rating, Tweets, or Maps. Enter New for a new City. To exit, enter Exit. ','Rating', ischoice)
-        if user_choice == 'New':
+        user_city = userinput('Enter a city to recieve a list of pizza restaurants within the city. To exit, enter Exit. ','Provo', isvalidcity)
+        if user_city == 'New':
             continue
-        if user_choice == "Exit":
+        if user_city == "Exit":
             break
-        print (user_choice)
-        if user_choice == 'Rating':
-            z_json = get_data_from_yelp(restaurant, user_city)
-            load_cache()
-            pp = pprint.PrettyPrinter(indent = 2)
-            # pp.pprint(z_json)
-            z_json = z_json['businesses'][0]['rating']
-            print(restaurant, 'Yelp Rating:', z_json)
+        print (user_city)
+        sql = "SELECT ID FROM City WHERE name = ?;"
+        cur.execute(sql, [user_city])
+        city_id = cur.fetchall()
+        city_id = city_id[0]
+        city_id = city_id[0]
 
-        if user_choice == 'Tweets':
-            tweets = get_tweets_for_rest(restaurant)
-            if len(tweets) > 0:
-                for x in tweets:
-                    print(x)
-            else:
-                print("No tweets found")
-            print("--------------------")
-        if user_choice == 'Maps':
-            pass
+        #now display the restrauants
+        sql = "SELECT DISTINCT name FROM Pizza WHERE city = ?;"
+        cur.execute(sql, [city_id])
+        # print(sql, '\n', cur.fetchall())
+        lst = cur.fetchall()
+        size_of_list = len(lst)
+        count = 0
+        for line in lst:
+            count = count + 1
+            line = line[0]
+            print (count, line)
 
-conn.close()
+        user_ans = input('Do you want to see the map? Y/N ')
+        if user_ans == "Y":
+            show_map(city_id)
 
-if __name__=="__main__":
-    userinput()
+        user_number = userinput('Enter the number of the restaurant you want. Enter New for a new City. To exit, enter Exit. ', 1, is_restaurant)
+        if user_number == 'New':
+            break
+        if user_number == "Exit":
+            sys.exit(0)
+
+        print (user_number)
+        restaurant = lst[int(user_number) - 1]
+        restaurant = restaurant[0]
+
+
+        while True:
+            user_choice = userinput('Enter Rating, Tweets, or Maps. Enter New for a new City. To exit, enter Exit. ','Rating', ischoice)
+            if user_choice == 'New':
+                break
+            if user_choice == "Exit":
+                sys.exit(0)
+            print (user_choice)
+            if user_choice == 'Rating':
+                z_json = get_data_from_yelp(restaurant, user_city)
+                load_cache()
+                pp = pprint.PrettyPrinter(indent = 2)
+                # pp.pprint(z_json)
+                z_json = z_json['businesses'][0]['rating']
+                print(restaurant, 'Yelp Rating:', z_json)
+
+            if user_choice == 'Tweets':
+                tweets = get_tweets_for_rest(restaurant)
+                if len(tweets) > 0:
+                    for x in tweets:
+                        print(x)
+                else:
+                    print("No tweets found")
+                print("--------------------")
+            if user_choice == 'Maps':
+                pass
